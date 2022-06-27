@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "secrets1": {
+      "type": "secrets.user"
+    },
+    "mssql2": {
+      "secretStore": "LocalSecretsFile",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/vbsqlserver1/databases/vbsql",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:CatalogConnection"
+    },
+    "mssql1": {
+      "secretStore": "LocalSecretsFile",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/vbsqlserver1/databases/vbsql",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:IdentityConnection"
+    }
+  }
+}

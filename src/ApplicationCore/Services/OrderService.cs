@@ -1,11 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Ardalis.GuardClauses;
+using Azure.Messaging.ServiceBus;
 using Microsoft.eShopWeb.ApplicationCore.Entities;
 using Microsoft.eShopWeb.ApplicationCore.Entities.BasketAggregate;
 using Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.ApplicationCore.Specifications;
+using Newtonsoft.Json;
 
 namespace Microsoft.eShopWeb.ApplicationCore.Services;
 
@@ -49,5 +54,31 @@ public class OrderService : IOrderService
         var order = new Order(basket.BuyerId, shippingAddress, items);
 
         await _orderRepository.AddAsync(order);
+        var myOrder = "itemID=" + items[0].Id + "&fprice=" + items[0].UnitPrice + "&buyerID=" + basket.BuyerId;
+        var client1 = new HttpClient();
+        var response = client1.GetAsync("https://orderprocessing1.azurewebsites.net/api/createCosmosOrders?" + myOrder).Result;
+
+        await using var client = new ServiceBusClient("Endpoint=sb://myvbservicebus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=kUd6qYiRvvN5wZr2NHSbB1b79FnksorZDZ1KFMMuSv8=;EntityPath=default");
+
+        // Create a ServiceBusSender object by invoking the CreateSender method on the ServiceBusClient object, and specifying the queue name. 
+        await using ServiceBusSender sender = client.CreateSender("default");
+
+        try
+        {
+            var json1 = JsonConvert.SerializeObject(order);
+            var message = new ServiceBusMessage(json1);
+            await sender.SendMessageAsync(message);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"{DateTime.Now} :: Exception: {exception.Message}");
+        }
+        finally
+        {
+            // Calling DisposeAsync on client types is required to ensure that network
+            // resources and other unmanaged objects are properly cleaned up.
+            await sender.DisposeAsync();
+            await client.DisposeAsync();
+        }
     }
 }
